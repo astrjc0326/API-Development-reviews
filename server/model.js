@@ -1,5 +1,5 @@
 const db = require('../database');
-
+// const db = require('../database/mongodb');
 module.exports = {
   getReview: async (req, res) => {
     res.send(`reviews for ${req.query.product_id}`);
