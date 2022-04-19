@@ -9,6 +9,8 @@ const reviewSchema = mongoose.Schema({
   body: String,
   reported: Boolean,
   helpfulness: Number,
+  photos: [String],
+  rating: Number,
 });
 
 // const Review = mongoose.model('Review', reviewSchema);
