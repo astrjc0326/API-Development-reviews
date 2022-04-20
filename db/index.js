@@ -1,6 +1,5 @@
 const { Pool } = require('pg');
 
-// console.log(process.env.USER);
 const db = new Pool({
   user: 'postgres',
   host: process.env.HOST,

@@ -7,49 +7,25 @@ CREATE TABLE reviews (
   review_date DATE NOT NULL,
   product_id INT,
   rating INT NOT NULL,
-  summary varchar(255) NOT NULL,
-  body varchar(1024) NOT NULL,
-  email varchar(255) NOT NULL,
-  username varchar(60) NOT NULL,
+  summary VARCHAR(255) NOT NULL,
+  body VARCHAR(1024) NOT NULL,
+  email VARCHAR(255) NOT NULL,
+  username VARCHAR(60) NOT NULL,
   recommended BOOLEAN,
   reported BOOLEAN DEFAULT FALSE,
-  helpfulness INT DEFAULT 0
-);
-
-CREATE TABLE meta(
-  meta_id SERIAL PRIMARY KEY,
-  product_id integer,
-  rating1 integer,
-  rating2 integer,
-  rating3 integer,
-  rating4 integer,
-  rating5 integer
-);
-
-CREATE TABLE recommendations(
-  recommendation_id SERIAL PRIMARY KEY,
-  product_id integer,
-  notrecom integer default 0,
-  recom integer default 0
+  helpfulness INT DEFAULT 0,
 );
 
 CREATE TABLE characteristics(
   char_id SERIAL PRIMARY KEY,
   product_id INT,
-  characteristic varchar(50),
+  characteristic VARCHAR(50),
   charvalue INT
 );
 
--- size
--- width
--- comfort
--- quality
--- length
--- fit
-
 CREATE TABLE photos (
   photo_id SERIAL PRIMARY KEY,
-  review_id integer,
+  review_id INT,
   url text[][][][][]
 );
 
