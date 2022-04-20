@@ -2,8 +2,25 @@ const mongoose = require('mongoose');
 
 mongoose.connect('mongodb+srv://githubfetch:hackreactor@cluster0.ndqjv.mongodb.net/myFirstDatabase?retryWrites=true&w=majority', { useUnifiedTopology: true });
 
-const reviewSchema = mongoose.Schema({
+const metaSchema = mongoose.Schema({
+  _id: { type: Number, unique: true },
   product_id: Number,
+  ratings: {
+    1: Number,
+    2: Number,
+    3: Number,
+    4: Number,
+    5: Number,
+  },
+  recommended: {
+    false: Number,
+    true: Number,
+  },
+  reviews: [Number],
+});
+
+const reviewSchema = mongoose.Schema({
+  _id: { type: Number, unique: true },
   username: String,
   email: String,
   summary: String,
@@ -15,8 +32,12 @@ const reviewSchema = mongoose.Schema({
   rating: Number,
 });
 
-// const Review = mongoose.model('Review', reviewSchema);
+const characteristicSchema = mongoose.Schema({
+  _id: { type: Number, unique: true },
+  product_id: Number,
+  type: String,
+  value: Number,
+});
 
-const db = reviewSchema.connection;
-
-module.exports = db;
+// const db = reviewSchema.connection;
+// module.exports = db;
