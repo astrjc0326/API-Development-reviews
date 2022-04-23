@@ -16,7 +16,7 @@ module.exports = {
         'helpfulness', r.helpfulness,
         'response', r.response,
         'photos', (
-          SELECT coalesce(json_agg(url), '{}'::json)
+          SELECT coalesce(json_agg(url), '[]'::json)
           FROM (
             SELECT url
             FROM photos
