@@ -83,3 +83,7 @@ ALTER TABLE reviews
 ALTER date SET DATA TYPE timestamp without time zone
 USING timestamp without time zone 'epoch' + (date / 1000 ) * interval '1 second';
 update reviews set date=to_timestamp(date,'YYYY-DD-MON-RRHH24:MI:SS.FF');
+
+alter table reviews alter column date type timestamp without time zone using to_timestamp(date) AT TIME ZONE 'UTC';
+
+update reviews set helpfulness = (select helpfulness from reviews where id=1) +1 where id=1;

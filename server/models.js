@@ -6,17 +6,17 @@ module.exports = {
     SELECT
     json_agg(
       json_build_object(
-        'review_id', id,
-        'rating', rating,
-        'date', date,
-        'summary', summary,
-        'body', body,
-        'reviewer_name', reviewer_name,
-        'recommend', recommend,
-        'helpfulness', helpfulness,
-        'response', response,
+        'review_id', r.id,
+        'rating', r.rating,
+        'date', r.date,
+        'summary', r.summary,
+        'body', r.body,
+        'reviewer_name', r.reviewer_name,
+        'recommend', r.recommend,
+        'helpfulness', r.helpfulness,
+        'response', r.response,
         'photos', (
-          SELECT coalesce(json_agg(url), '[]'::json)
+          SELECT coalesce(json_agg(url), '{}'::json)
           FROM (
             SELECT url
             FROM photos
@@ -25,16 +25,14 @@ module.exports = {
         )
       )
     ) as results
-    FROM reviews r WHERE product_id = $1;
+    FROM (SELECT * FROM reviews WHERE product_id = $1 AND reported=false) as r;
     `;
     db.pool.query(query, [productID], (err, result) => {
       if (result) {
         callback(null, result.rows);
+      } else {
+        callback(err);
       }
-      else {
-        callback(null);
-      }
-      console.log(err);
     });
   },
   getMeta: (productID, callback) => {
@@ -42,35 +40,38 @@ module.exports = {
     SELECT json_build_object(
       'product_id', product_id,
        'ratings',
-           (SELECT json_object_agg(rating,num_reviews)
-              FROM (SELECT rating, count(*) as num_reviews from reviews
-                  WHERE product_id = $1 GROUP BY rating) r),
+          (SELECT json_object_agg(rating, num_reviews)
+          FROM (SELECT rating, count(*) as num_reviews from reviews
+          WHERE product_id = $1 GROUP BY rating) r),
        'recommended',
-            (SELECT json_object_agg(recommend,num_reviews)
-            FROM (SELECT recommend, count(*) as num_reviews FROM reviews
-             WHERE product_id = $1 group by recommend) re),
+          (SELECT json_object_agg(
+          recommend,
+          num_reviews
+          ) FROM (SELECT recommend, count(*) as num_reviews FROM reviews WHERE product_id = $1 group by recommend) re),
       'characteristics',
-             (SELECT json_object_agg
-             ( name, json_build_object(
-                    'id', id,
-                    'value', value
-                 ))
-            FROM (
-              SELECT  c.name,  c.id, sum(value)/count(*) as value
-              FROM characteristics c
-              LEFT JOIN characteristic_reviews cr
-              ON c.id = cr.characteristic_id
-              WHERE c.product_id = $1
-              GROUP BY  c.name, c.id
-                ) r
-            )
+        (SELECT json_object_agg(
+        name,
+        json_build_object(
+          'id', id,
+          'value', value
+          )
+        )
+      FROM ( SELECT c.name, c.id, sum(value)/count(*) as value
+      FROM characteristics c
+      LEFT JOIN characteristic_reviews cr
+      ON c.id = cr.characteristic_id
+      WHERE c.product_id = $1
+      GROUP BY c.name, c.id
+        ) r
+      )
      ) as results
-    FROM reviews
-    WHERE product_id = $1 ;
+    FROM reviews WHERE product_id = $1 ;
     `;
     db.pool.query(query, [productID], (err, result) => {
       if (!err) {
         callback(null, result.rows);
+      } else {
+        callback(err);
       }
     });
   },
@@ -78,29 +79,54 @@ module.exports = {
     const query = `
     INSERT INTO reviews
     (id, date, product_id, rating, summary, body, reviewer_email, reviewer_name, recommend, helpfulness) VALUES
-    (5774953, $1, $2, $3, $4, $5, $6, $7, $8, $9);`;
+    ((SELECT count(id) FROM reviews)+1, $1, $2, $3, $4, $5, $6, $7, $8, $9);`;
+    const photoquery = `
+    INSERT INTO photos (id, review_id, url) VALUES ((SELECT count(id) FROM photos)+1+$2, (SELECT count(id) FROM reviews), $1)`;
+    const characteristicQuery = `
+    INSERT INTO characteristic_reviews (id, characteristic_id, review_id, value) VALUES ((SELECT count(id) FROM characteristic_reviews)+1+$3, $1, (SELECT count(id) FROM reviews), $2);
+    `;
     db.pool.query(query, review, (err, result) => {
       if (!err) {
-        console.log(result);
-        callback(null, result);
-      } else {
-        console.log(err);
+        if (photos.length === 0 && Object.keys(characteristics).length === 0) {
+          return callback(null, result);
+        }
+        photos.forEach(async (photo, index) => {
+          await db.pool.query(photoquery, [photo, index], (error) => {
+            if (error) { return callback(error); } if (Object.keys(characteristics).length === 0) {
+              return callback(null);
+            }
+            Object.keys(characteristics).forEach(async (characteristic, ind) => {
+              const num = characteristic.toString();
+              await db.pool.query(
+                characteristicQuery,
+                [characteristic, Number(characteristics[num]), ind],
+                (error1) => {
+                  if (error1) {
+                    return callback(error1);
+                  }
+                },
+              );
+            });
+          });
+        });
+        return callback(null, result);
       }
+      callback(err);
     });
-    /* insert into reviews (review_date, product_id, rating, summary, body,
-    reviewer_email, reviewer_name, recommend, reported, helpfulness, response) values
-    ('2008-11-11', 1, 5, 'apple', 'apple',
-    'apple', 'apple', true, false, 0, 'apple'); */
   },
   putReviewHelpful: (reviewID, callback) => {
     const query = `
-    SELECT
+    UPDATE reviews SET helpfulness = (SELECT helpfulness FROM reviews WHERE id=$1) +1 where id=$1;
     `;
-    db.pool.query(query, reviewID, (err, result) => {
-
+    db.pool.query(query, [reviewID], (err, result) => {
+      callback(err, result);
     });
   },
   reportReview: (reviewID, callback) => {
-    res.send('report a reviews');
+    const query = `
+    UPDATE reviews SET reported=true WHERE id=$1`;
+    db.pool.query(query, [reviewID], (err, result) => {
+      callback(err, result);
+    });
   },
 };

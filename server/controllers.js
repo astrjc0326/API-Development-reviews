@@ -6,7 +6,7 @@ module.exports = {
     const page = req.query.page || 1;
     const count = req.query.count || 5;
     models.getReview(productID, (err, result) => {
-      if (!result) { res.send(501); }
+      if (!result) { return res.sendStatus(501); }
       const data = {};
       data.product_id = productID;
       data.page = page;
@@ -18,6 +18,7 @@ module.exports = {
   getMeta: (req, res) => {
     const productID = req.query.product_id;
     models.getMeta(productID, (err, result) => {
+      if (err) { return res.sendStatus(501); }
       res.send(result[0].results);
     });
   },
@@ -40,14 +41,30 @@ module.exports = {
     models.postReview(data, req.body.photos, req.body.characteristics, (err) => {
       if (!err) {
         console.log('post a reviews successfully');
-        res.status(201);
+        res.sendStatus(201);
       }
     });
   },
   putReviewHelpful: (req, res) => {
-    res.send('put a review helpful');
+    models.putReviewHelpful(req.params.review_id, (err) => {
+      if (!err) {
+        res.sendStatus(204);
+        console.log('put review helpful successfully');
+      } else {
+        res.sendSend(501);
+      }
+    });
   },
-  reportReview: async (req, res) => {
-    res.send('report a reviews');
+  reportReview: (req, res) => {
+    console.log(req.params.review_id);
+    models.reportReview(req.params.review_id, (err) => {
+      if (!err) {
+        res.sendStatus(204);
+        console.log('report a review successfully');
+      } else {
+        res.sendStatus(404);
+        console.err('Can not report the review');
+      }
+    });
   },
 };
