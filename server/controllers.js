@@ -18,7 +18,7 @@ module.exports = {
   getMeta: (req, res) => {
     const productID = req.query.product_id;
     models.getMeta(productID, (err, result) => {
-      if (err) { return res.sendStatus(501); }
+      if (!result || !result[0]) { return res.sendStatus(501); }
       res.send(result[0].results);
     });
   },
@@ -40,8 +40,9 @@ module.exports = {
     ];
     models.postReview(data, req.body.photos, req.body.characteristics, (err) => {
       if (!err) {
-        console.log('post a reviews successfully');
         res.sendStatus(201);
+      } else {
+        res.sendStatus(400);
       }
     });
   },
@@ -49,9 +50,8 @@ module.exports = {
     models.putReviewHelpful(req.params.review_id, (err) => {
       if (!err) {
         res.sendStatus(204);
-        console.log('put review helpful successfully');
       } else {
-        res.sendSend(501);
+        res.sendSend(400);
       }
     });
   },
@@ -60,10 +60,8 @@ module.exports = {
     models.reportReview(req.params.review_id, (err) => {
       if (!err) {
         res.sendStatus(204);
-        console.log('report a review successfully');
       } else {
-        res.sendStatus(404);
-        console.err('Can not report the review');
+        res.sendStatus(400);
       }
     });
   },

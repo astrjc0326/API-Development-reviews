@@ -42,7 +42,7 @@ module.exports = {
        'ratings',
           (SELECT json_object_agg(rating, num_reviews)
           FROM (SELECT rating, count(*) as num_reviews from reviews
-          WHERE product_id = $1 GROUP BY rating) r),
+          WHERE product_id = $1 GROUP BY rating) r ),
        'recommended',
           (SELECT json_object_agg(
           recommend,
@@ -58,7 +58,7 @@ module.exports = {
         )
       FROM ( SELECT c.name, c.id, sum(value)/count(*) as value
       FROM characteristics c
-      LEFT JOIN characteristic_reviews cr
+      FULL OUTER JOIN characteristic_reviews cr
       ON c.id = cr.characteristic_id
       WHERE c.product_id = $1
       GROUP BY c.name, c.id
