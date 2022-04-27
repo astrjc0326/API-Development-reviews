@@ -104,5 +104,4 @@ dist
 .tern-port
 
 csv
-
-.pem/
+FrontEndCapstone.pem
