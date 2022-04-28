@@ -17,9 +17,16 @@ module.exports = {
   },
   getMeta: (req, res) => {
     const productID = req.query.product_id;
+    const notchar = {
+      product_id: productID,
+      rating: {},
+      recommended: {},
+      characteristics: {},
+    };
     models.getMeta(productID, (err, result) => {
-      if (!result || !result[0]) { return res.sendStatus(501); }
+      if (!result || !result[0]) { return res.send(notchar); }
       res.send(result[0].results);
+      if (err) { res.sendStatus(501); }
     });
   },
   postReview: (req, res) => {

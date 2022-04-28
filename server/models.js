@@ -69,6 +69,7 @@ module.exports = {
     `;
     db.pool.query(query, [productID], (err, result) => {
       if (!err) {
+        console.log(result);
         callback(null, result.rows);
       } else {
         callback(err);
